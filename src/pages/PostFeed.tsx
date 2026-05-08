@@ -1,35 +1,5 @@
 import { useState } from "react";
-
-
-export const madePosts = [
-    {
-         id: 12345,
-        userId: "4821",
-        username: "anon4821",
-        content: "This is my first anonymous post 👀",
-        upvotes: 12,
-        downvotes: 2,
-        timestamp: Date.now() - 1000 * 60 * 5, 
-    },
-    {
-        id: 67890,
-        userId: "9921",
-        username: "anon9921",
-        content: "Does anyone else feel like React finally clicked today?",
-        upvotes: 25,
-        downvotes: 1,
-        timestamp: Date.now() - 1000 * 60 * 60, // 1 hour ago
-    },
-    {
-        id: 54321,
-        userId: "1112",
-        username: "anon1112",
-        content: "Hot take: useContext is easier than props drilling 😤",
-        upvotes: 40,
-        downvotes: 5,
-        timestamp: Date.now() - 1000 * 60 * 60 * 3,   
-    }
-]
+import { madePosts } from "../components/MAdePosts";
 
 type newPostType = {
         id: number,
@@ -38,6 +8,8 @@ type newPostType = {
         upvotes: number,
         downvotes: number,
         timestamp: number,
+        upvotedUsers: string[],
+        downvotedUsers: string[]
     }
 
 export function PostMain(){
@@ -45,7 +17,7 @@ export function PostMain(){
     const [posts, setPosts] = useState<newPostType[]>(madePosts);
     const [input, setInput] = useState("");
     const [sortType, setSortType] = useState("newest");
-
+    
     const sortedPosts = [...posts].sort((a, b) => {
         if (sortType === "trending") {
             return b.upvotes - a.upvotes;
@@ -56,10 +28,69 @@ export function PostMain(){
         }
     })
 
+    function addUpvote(clickedId:number) {
+
+        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+        const currentUserId = userInfo?.userId || null;
+        if (!currentUserId) return;
+
+        setPosts((posts) => 
+            posts.map((post) => {
+                if(post.id === clickedId) {
+                    if(post.upvotedUsers?.includes(currentUserId)){
+                        const updatedUsers = (post.upvotedUsers || []).filter((userId) => userId !== currentUserId)
+                        return {
+                            ...post,
+                            upvotes: post.upvotes -1,
+                            upvotedUsers: updatedUsers
+                        }
+                    } else {
+                       return {
+                        ...post, 
+                        upvotes: post.upvotes +1,
+                        upvotedUsers: [...(post.upvotedUsers || []), currentUserId]
+                        };
+                    }
+                }
+                return post;
+            })
+        );
+
+    }
+
+    function addDownvote(clickedId:number) {
+
+        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "null");
+        const currentUserId = userInfo?.userId || null;
+        if (!currentUserId) return;
+
+        setPosts((posts) => 
+            posts.map((post) => {
+                if(post.id === clickedId) {
+                    if(post.downvotedUsers?.includes(currentUserId)){
+                        const updatedUsers = (post.downvotedUsers || []).filter((userId) => userId !== currentUserId)
+                        return {
+                            ...post,
+                            downvotes: post.downvotes -1,
+                            downvotedUsers: updatedUsers
+                        }
+                    } else {
+                       return {
+                        ...post, 
+                        downvotes: post.downvotes +1,
+                        downvotedUsers: [...(post.downvotedUsers || []), currentUserId]
+                        };
+                    }
+                }
+                return post;
+            })
+        );
+
+    }
     function addPost(content:string){
         if (!content.trim()) return
 
-        const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "[]");
 
         const newPost:newPostType = {
             id: Math.floor(Math.random() * (1000000) + 1),
@@ -68,6 +99,8 @@ export function PostMain(){
             upvotes: 0,
             downvotes: 0,
             timestamp: Date.now(),
+            upvotedUsers: [],
+            downvotedUsers: []
         };
 
         setPosts((theRest) => [newPost, ...theRest])
@@ -75,17 +108,9 @@ export function PostMain(){
     }
 
     return (
-        <div>
-
-            <input 
-                placeholder="Write a post..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-            />
-
-            <button onClick={() => addPost(input)}>Add Post</button>
-
-            <select
+        <div className="min-h-screen bg-black text-white">
+            <div className="max-w-3xl mx-auto p-6">
+               <select
                 value={sortType}
                 onChange={(e) => setSortType(e.target.value)}
             >
@@ -94,16 +119,44 @@ export function PostMain(){
                 <option value="trending">Trending</option>
                 {/* there will be a msot liekd and least liekd option */}
             </select>
+            
+            
+            
+            <div className="flex flex-col items-start gap-3">
+            <textarea 
+                rows={4}
+                className="w-full bg-zinc-900 border border-zinc-600 px-4 py-2 rounded-xl"
+                placeholder="Write a post..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+            />
 
-            <div>
+            <button className="bg-blue-500 px-4 py-2 rounded-xl hover:bg-blue-600 transition" onClick={() => addPost(input)}>Add Post</button>
+            </div>
+
+            <div className="flex flex-col gap-4 pt-6">
                 {sortedPosts.map((post) => (
-                    <div key={post.id}>
-                        <p>{post.content}</p>
-                        <p> Upvotes: {post.upvotes} Downvotes: {post.downvotes} </p>
+                    <div key={post.id} className="flex flex-col gap-1 bg-zinc-900 border border-zinc-800 rounded-2xl pt-5 px-5 pb-1 shadow-md">
+                        <p className="text-white break-words">
+                            {post.content}
+                        </p>
+                        <div className="flex flex-row gap-2 text-sm">
+                            <button className="text-white-800 hover:scale-110 transition-transform"
+                            onClick={() => addUpvote(post.id)}
+                            > 
+                                <span className="text-green-400">▲</span> {post.upvotes} 
+                            </button>
+
+                            <button className="text-white-800 hover:scale-110 transition-transform"
+                            onClick = {() => addDownvote(post.id)}
+                            >
+                                <span className="text-red-400 ">▼</span> {post.downvotes} 
+                            </button>
+                        </div>
                     </div>    
                 ))}
             </div>
-
+            </div>
         </div>
     )
 }

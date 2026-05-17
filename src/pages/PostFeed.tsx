@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { madePosts } from "../components/MAdePosts";
+import { madePosts } from "../components/MadePosts";
 
 type newPostType = {
         id: number,

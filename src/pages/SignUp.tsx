@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 export function SignUp () {
 
@@ -7,13 +8,15 @@ export function SignUp () {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [password2, setPassword2] = useState("")
+    const navigate = useNavigate()
 
 
     function handleSubmit () {
         if (password === password2 && email !== "" && username !== "") {
             const userInfo = {userId:Date.now(), username:{username}, email:{email}, password:{password}}
             localStorage.setItem("userInfo",JSON.stringify(userInfo))
-        } 
+            navigate("/postfeed")
+        }
         
     }
 

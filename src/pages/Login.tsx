@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 export function Login () {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const navigate = useNavigate()
 
     const Users = [
         {userId:1, username:"Ronald", email:"RonaldMcDonald@gmail.com", password:"Burgerkingsux"},
@@ -16,6 +18,7 @@ export function Login () {
 
         if (user !== null) {
             localStorage.setItem("userInfo", JSON.stringify(user))
+            navigate("/postfeed")
         }
 
 
